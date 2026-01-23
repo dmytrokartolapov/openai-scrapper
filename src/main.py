@@ -168,55 +168,13 @@ def db_scrape_url(
     return ScrapResponse(url=url, messages=messages, job="saved_to_db")
 
 
-# @app.get(
-#     "/v1/db/scrape_url",
-#     status_code=status.HTTP_200_OK,
-#     tags=["scrape_url"],
-#     summary="Will scraped data to database.",
-# )
-# def db_scrape_url(
-#     request: Request,
-#     query: Annotated[ScrapRequest, Depends()],
-# ) -> ScrapResponse:
-#     def extract_news(url: str) -> str:
-#         """Extracts the headline and text from a news article URL."""
-#         article = Article(url)
-#         article.download()
-#         article.parse()
-#         return f"Headline: {article.title}\nArticle: {article.text}".replace("\n\n", "\n")
-#
-#     url = query.url
-#     logger.info(f"Scraping URL: {url}")
-#     model = ChatOpenAI(model="gpt-5", temperature=0.1, max_tokens=1000, timeout=300)
-#     agent = create_agent(
-#         model=model,
-#         tools=[extract_news],
-#         system_prompt=SYSTEM_PROMPT,
-#     )
-#
-#     # Run the agent
-#     result = agent.invoke(
-#         {
-#             "messages": [
-#                 {
-#                     "role": "user",
-#                     "content": f"Make the summary for {url}",
-#                 }
-#             ]
-#         }
-#     )
-#     [print(f"{message.type}: {message.content}") for message in result["messages"]]
-#     messages = [f"{message.type}: {message.content}" for message in result["messages"]]
-#     return ScrapResponse(url=url, messages=messages, job="saved_to_db")
-
-
 @app.get(
     "/v1/db/read_db",
     status_code=status.HTTP_200_OK,
     tags=["read_db"],
     summary="Reads scraped data from database.",
 )
-async def db_scrape_url(
+async def db_read(
     request: Request,
     query: Annotated[ScrapRequest, Depends()],
 ) -> DBResponse:

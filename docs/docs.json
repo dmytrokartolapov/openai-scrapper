@@ -82,7 +82,7 @@
           "read_db"
         ],
         "summary": "Reads scraped data from database.",
-        "operationId": "db_scrape_url_v1_db_read_db_get",
+        "operationId": "db_read_v1_db_read_db_get",
         "parameters": [
           {
             "name": "url",
