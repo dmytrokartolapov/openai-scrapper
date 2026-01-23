@@ -7,24 +7,21 @@ The OpenAI Scrapper is an advanced web scraping solution designed to automate th
 - FastAPI
 - Uvicorn
 
-Installation
-
-Clone the repository:
+## Installation
+### Clone the repository:
 
 ```bash
 git clone <your-repo-url>
 cd openai-scrapper
 ```
 
-Running the Application
-------------
+### Running the Application
 Start the FastAPI server using Uvicorn:
 ```bash
 uvicorn src.main:app --reload
 ```
 
-Or Use Launcher:
-------------
+### Or Use Launcher:
 Uvicorn under hood:
 ```
 python launcher.py
