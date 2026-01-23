@@ -1,0 +1,28 @@
+# Python versions your project supports
+target-version = "py312"
+
+# Preferred max line length (Black's default is 88; change to 100 or 120 if you prefer)
+line-length = 120
+
+[lint]
+# Paths/dirs Ruff should skip
+exclude = [
+  ".git",
+  ".venv",
+  "venv",
+  "__pycache__",
+  "build",
+  "dist",
+  ".eggs",
+  "migrations",
+]
+
+# Common style differences with Black — ignore these errors to avoid conflicts
+extend-ignore = ["E203"]
+
+# Per-file exceptions (use glob patterns)
+[lint.per-file-ignores]
+# Allow re-exported/unused imports in package __init__ files
+"**/__init__.py" = ["F401"]
+# Tests commonly use asserts and often skip docstring rules
+"tests/**/*" = ["D", "S101"]

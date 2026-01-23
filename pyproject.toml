@@ -1,0 +1,35 @@
+# PEP 621 metadata + setuptools build backend (recommended for libraries)
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "openai-scrapper"
+version = "0.1.0"
+description = "The OpenAI Scrapper is an advanced web scraping solution designed to automate the extraction, summarization, and storage of web content using state-of-the-art AI and vector database technologies. Leveraging the power of LangChain, this project enables seamless interaction with large language models to process and summarize scraped data efficiently."
+authors = [
+    { name="Dmytro Kartolapov", email="Dmytro_Kartolapov@epam.com" }
+]
+readme = "README.md"
+requires-python = "==3.12.7"
+dependencies = [
+    "fastapi==0.128.0",
+    "uvicorn==0.40.0",
+    "pydantic==2.12.5",
+    "colorlog==6.10.1",
+    "requests==2.32.5"
+]
+
+# optional/dev dependencies groups
+[project.optional-dependencies]
+dev = [
+    "pyyaml==6.0.3",
+    "types-PyYAML==6.0.12.20250915",
+    "types-requests==2.32.4.20260107",
+    "httpx==0.28.1",
+    "pytest>=7.0",
+    "pytest-asyncio",
+    "mypy>=1.0",
+    "ruff",
+    "coverage",
+]
