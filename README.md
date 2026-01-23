@@ -15,13 +15,41 @@ git clone <your-repo-url>
 cd openai-scrapper
 ```
 
-### Running the Application
-Start the FastAPI server using Uvicorn:
-```bash
-uvicorn src.main:app --reload
-```
+### Add OPENAI_API_KEY as Environment Variable:
+Prerequisites
+You must have an OpenAI account. If you don’t have one, sign up at https://platform.openai.com/signup.
 
-### Or Use Launcher:
+Step 1: Log in to OpenAI Platform
+Go to https://platform.openai.com/.
+Click Sign In and enter your credentials.
+
+Step 2: Access API Keys Section
+Once logged in, click on your profile icon (top right corner).
+Select View API Keys from the dropdown menu.
+
+Step 3: Create a New API Key
+On the API Keys page, click the + Create new secret key button.
+Enter a name for your key (optional, for your reference). Click Create secret key.
+
+Step 4: Copy and Store Your API Key
+A new API key will be displayed. Copy it immediately—you won’t be able to see it again!
+Store the key securely (e.g., in a password manager or a secure environment variable).
+
+Step 5: Use the API Key
+Add it as Environment Variable OPENAI_API_KEY. Set as Environment Variable in PyCharm for launcher.py.
+1) Open your project in PyCharm.
+2) Go to Run > Edit Configurations...
+3) Select your script or create a new configuration.
+4) In the configuration window, find the Environment variables field.
+5) Click the ... button next to it.
+6) In the dialog, click the + button to add a new variable.
+7) Enter:
+   - Name: OPENAI_API_KEY
+   - Value: your-actual-api-key
+8) Click OK to save.
+9) Run your script from PyCharm. The environment variable will be available to your code.
+
+### Use Launcher:
 Uvicorn under hood:
 ```
 python launcher.py

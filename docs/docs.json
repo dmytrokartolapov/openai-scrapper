@@ -30,7 +30,7 @@
     "/v1/db/scrape_url": {
       "get": {
         "tags": [
-          "scrapping"
+          "scrape_url"
         ],
         "summary": "Will scraped data to database.",
         "operationId": "db_scrape_url_v1_db_scrape_url_get",
@@ -79,7 +79,7 @@
     "/v1/db/read_db": {
       "get": {
         "tags": [
-          "scrapping"
+          "read_db"
         ],
         "summary": "Reads scraped data from database.",
         "operationId": "db_scrape_url_v1_db_read_db_get",
@@ -107,7 +107,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ScrapResponse"
+                  "$ref": "#/components/schemas/DBResponse"
                 }
               }
             }
@@ -128,6 +128,59 @@
   },
   "components": {
     "schemas": {
+      "DBResponse": {
+        "properties": {
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url",
+            "description": "The URL from which data were be scraped.",
+            "examples": [
+              "https://example.com"
+            ]
+          },
+          "text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Text",
+            "description": "Data scraped from url",
+            "examples": [
+              "Some text"
+            ]
+          },
+          "job": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Job",
+            "description": "The job that was done.",
+            "examples": [
+              "saved_to_db",
+              "read_from_db"
+            ]
+          }
+        },
+        "type": "object",
+        "title": "DBResponse",
+        "description": "Model for a response with scraped data from a given URL."
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -172,19 +225,20 @@
               "https://example.com"
             ]
           },
-          "text": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Text",
-            "description": "Data scraped from url",
+          "messages": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Messages",
+            "description": "Messages scraped from url and summary from LangChain.",
+            "default": [],
             "examples": [
-              "Some text"
+              [
+                "message_1",
+                "message_2",
+                "message_3"
+              ]
             ]
           },
           "job": {

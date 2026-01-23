@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field
 
 
-class ScrapResponse(BaseModel):
+class DBResponse(BaseModel):
     """
     Model for a response with scraped data from a given URL.
     """
@@ -11,10 +11,10 @@ class ScrapResponse(BaseModel):
         description="The URL from which data were be scraped.",
         examples=["https://example.com"],
     )
-    messages: list[str] = Field(
-        default=[],
-        description="Messages scraped from url and summary from LangChain.",
-        examples=[["message_1", "message_2", "message_3"]],
+    text: str | None = Field(
+        default=None,
+        description="Data scraped from url",
+        examples=["Some text"],
     )
     job: str | None = Field(
         default=None,

@@ -20,4 +20,3 @@ async def test_validation_error_handler():
         resp = await ac.get("/v1/db/scrape_url?url=error")
         assert resp.status_code == 422
         assert "code" in resp.json() or "detail" in resp.json()
-
