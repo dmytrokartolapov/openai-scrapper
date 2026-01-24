@@ -6,12 +6,12 @@ class SearchResponse(BaseModel):
     Model for a response with scraped data from a given URL.
     """
 
-    text: str | None = Field(
-        default=None,
+    text: str = Field(
+        default="",
         description="The query to semantic search for.",
         examples=["Chinese cuisine in the UK"],
     )
-    payload: list  = Field(
+    payload: list = Field(
         default=[],
         description="Result of semantic search",
         examples=[["Headline: *** \n Summary: *** \n Keywords: ***"]],

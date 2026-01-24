@@ -6,15 +6,15 @@ class SearchRequest(BaseModel):
     Model for a request to make semantic search in DB.
     """
 
-    text: str | None = Field(
-        default=None,
+    text: str = Field(
+        default="",
         description="The query to semantic search for.",
         examples=["Chinese cuisine in the UK"],
     )
     limit: int | str = Field(
         default=5,
         description="The maximum number of results to return.",
-        examples=5,
+        examples=[1, 2, 3, 4, 5],
     )
 
     @field_validator("limit")

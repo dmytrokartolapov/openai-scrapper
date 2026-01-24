@@ -98,7 +98,7 @@ def extract_news(url: str) -> str:
 
 
 def get_agent(
-    model: ChatOpenAI = Depends(lambda: ChatOpenAI(model="gpt-5-mini", temperature=0.1, max_tokens=1000, timeout=300)),
+    model: ChatOpenAI = Depends(lambda: ChatOpenAI(model="gpt-5-mini", temperature=0.1, max_tokens=1000, timeout=300)), # type: ignore
     tools: list = Depends(lambda: [extract_news]),
     system_prompt: str = Depends(lambda: SYSTEM_PROMPT),
 ) -> CompiledStateGraph:
@@ -243,7 +243,7 @@ async def db_semantic_search(
     db: Annotated[QdrantClient, Depends(get_db)],
 ) -> SearchResponse:
     query_text = query.text
-    limit = query.limit
+    limit = int(query.limit)
     response = db.query(collection_name="news_articles", query_text=query_text, limit=limit)
     payload = [str(result.metadata) for result in response]
     return SearchResponse(text=query_text, payload=payload, job="read_from_db")
