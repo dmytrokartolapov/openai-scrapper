@@ -40,14 +40,8 @@
             "in": "query",
             "required": false,
             "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
+              "type": "string",
+              "default": "",
               "title": "Url"
             }
           }
@@ -76,16 +70,16 @@
         }
       }
     },
-    "/v1/db/read_db": {
+    "/v1/db/semantic_search": {
       "get": {
         "tags": [
-          "read_db"
+          "semantic_search"
         ],
-        "summary": "Reads scraped data from database.",
-        "operationId": "db_read_v1_db_read_db_get",
+        "summary": "Runs semantic search in database.",
+        "operationId": "db_semantic_search_v1_db_semantic_search_get",
         "parameters": [
           {
-            "name": "url",
+            "name": "text",
             "in": "query",
             "required": false,
             "schema": {
@@ -97,7 +91,24 @@
                   "type": "null"
                 }
               ],
-              "title": "Url"
+              "title": "Text"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "default": 5,
+              "title": "Limit"
             }
           }
         ],
@@ -107,7 +118,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/DBResponse"
+                  "$ref": "#/components/schemas/SearchResponse"
                 }
               }
             }
@@ -128,59 +139,6 @@
   },
   "components": {
     "schemas": {
-      "DBResponse": {
-        "properties": {
-          "url": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Url",
-            "description": "The URL from which data were be scraped.",
-            "examples": [
-              "https://example.com"
-            ]
-          },
-          "text": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Text",
-            "description": "Data scraped from url",
-            "examples": [
-              "Some text"
-            ]
-          },
-          "job": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Job",
-            "description": "The job that was done.",
-            "examples": [
-              "saved_to_db",
-              "read_from_db"
-            ]
-          }
-        },
-        "type": "object",
-        "title": "DBResponse",
-        "description": "Model for a response with scraped data from a given URL."
-      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -260,6 +218,56 @@
         },
         "type": "object",
         "title": "ScrapResponse",
+        "description": "Model for a response with scraped data from a given URL."
+      },
+      "SearchResponse": {
+        "properties": {
+          "text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Text",
+            "description": "The query to semantic search for.",
+            "examples": [
+              "Chinese cuisine in the UK"
+            ]
+          },
+          "payload": {
+            "items": {},
+            "type": "array",
+            "title": "Payload",
+            "description": "Result of semantic search",
+            "default": [],
+            "examples": [
+              [
+                "Headline: *** \n Summary: *** \n Keywords: ***"
+              ]
+            ]
+          },
+          "job": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Job",
+            "description": "The job that was done.",
+            "examples": [
+              "saved_to_db",
+              "read_from_db"
+            ]
+          }
+        },
+        "type": "object",
+        "title": "SearchResponse",
         "description": "Model for a response with scraped data from a given URL."
       },
       "ValidationError": {

@@ -3,9 +3,12 @@ The OpenAI Scrapper is an advanced web scraping solution designed to automate th
 
 ## Requirements
 
-- Python 3.12.7
+- Python 3.12.10
 - FastAPI
 - Uvicorn
+- LangChain
+- OpenAI
+- Qdrant
 
 ## Installation
 ### Clone the repository:
@@ -15,9 +18,19 @@ git clone <your-repo-url>
 cd openai-scrapper
 ```
 
+### Upload and startup a Database
+Go to https://github.com/qdrant/qdrant/releases and get last version of qdrant.exe for windows. Or download tested version [qdrant-x86_64-pc-windows-msvc.zip](https://github.com/qdrant/qdrant/releases/download/v1.16.3/qdrant-x86_64-pc-windows-msvc.zip)
+
+Put qdrant.exe in your cloned project and launch it in project terminal by writing in it (may be different in your environment):
+```
+./qdrant.exe
+```
+
 ### Add OPENAI_API_KEY as Environment Variable:
 Prerequisites
 You must have an OpenAI account. If you don’t have one, sign up at https://platform.openai.com/signup.
+After that you will need to the [Billing](https://platform.openai.com/settings/organization/billing/overview) and add some credits to balance.  
+5$ is totally enough to test it.
 
 Step 1: Log in to OpenAI Platform
 Go to https://platform.openai.com/.

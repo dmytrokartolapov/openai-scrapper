@@ -1,20 +1,20 @@
 from pydantic import BaseModel, Field
 
 
-class DBResponse(BaseModel):
+class SearchResponse(BaseModel):
     """
     Model for a response with scraped data from a given URL.
     """
 
-    url: str | None = Field(
-        default=None,
-        description="The URL from which data were be scraped.",
-        examples=["https://example.com"],
-    )
     text: str | None = Field(
         default=None,
-        description="Data scraped from url",
-        examples=["Some text"],
+        description="The query to semantic search for.",
+        examples=["Chinese cuisine in the UK"],
+    )
+    payload: list  = Field(
+        default=[],
+        description="Result of semantic search",
+        examples=[["Headline: *** \n Summary: *** \n Keywords: ***"]],
     )
     job: str | None = Field(
         default=None,

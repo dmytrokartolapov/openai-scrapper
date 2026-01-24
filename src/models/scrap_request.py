@@ -7,8 +7,8 @@ class ScrapRequest(BaseModel):
     Model for a request to scrape data from a given URL.
     """
 
-    url: str | None = Field(
-        default=None,
+    url: str = Field(
+        default="",
         description="The URL from which data will be scraped.",
         examples=["https://example.com"],
     )
@@ -16,9 +16,6 @@ class ScrapRequest(BaseModel):
     @field_validator("url")
     @classmethod
     def validate_url(cls, value):
-        if value is None:
-            return value
-
         result = urlparse(value)
 
         if not all([result.scheme, result.netloc]):

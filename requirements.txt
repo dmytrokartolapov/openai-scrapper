@@ -14,3 +14,6 @@ langchain==1.2.6
 langchain-openai==1.1.7
 newspaper3k==0.2.8
 lxml_html_clean==0.4.3
+fastembed==0.7.4
+sentence-transformers==5.2.0
+qdrant-client==1.16.2
