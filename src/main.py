@@ -98,7 +98,7 @@ def extract_news(url: str) -> str:
 
 
 def get_agent(
-    model: ChatOpenAI = Depends(lambda: ChatOpenAI(model="gpt-5-mini", temperature=0.1, max_tokens=1000, timeout=300)), # type: ignore
+    model: ChatOpenAI = Depends(lambda: ChatOpenAI(model="gpt-5-mini", temperature=0.1, max_tokens=1000, timeout=300)),  # type: ignore
     tools: list = Depends(lambda: [extract_news]),
     system_prompt: str = Depends(lambda: SYSTEM_PROMPT),
 ) -> CompiledStateGraph:
