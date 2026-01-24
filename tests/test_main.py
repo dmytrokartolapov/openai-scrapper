@@ -2,7 +2,7 @@ import pytest
 import json
 from httpx import AsyncClient, ASGITransport
 from fastapi import status
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock
 
 from src.main import app, extract_news, hash_url, get_db, get_agent
 
@@ -36,8 +36,6 @@ async def test_unhandled_exception_handler():
     transport = ASGITransport(app=app, raise_app_exceptions=False)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         resp = await ac.get("/raise-exception")
-        print(resp.status_code)
-        print(resp.json())
         assert resp.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
         data = resp.json()
         assert data["detail"].startswith("Internal Server Error")
@@ -138,7 +136,6 @@ async def test_db_scrape_url():
     transport = ASGITransport(app=app, raise_app_exceptions=False)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         resp = await ac.get("/v1/db/scrape_url?url=http://example.com/news")
-        print("RESPONSE BODY:", resp.text)
         assert resp.status_code == 200
         data = resp.json()
         assert data["url"] == "http://example.com/news"
@@ -165,7 +162,6 @@ async def test_db_semantic_search():
     transport = ASGITransport(app=app, raise_app_exceptions=False)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         resp = await ac.get("/v1/db/semantic_search?text=economy&limit=1")
-        print("RESPONSE BODY:", resp.text)
         assert resp.status_code == 200
         data = resp.json()
         assert data["text"] == "economy"
