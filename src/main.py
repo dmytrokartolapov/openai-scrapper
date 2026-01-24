@@ -177,7 +177,8 @@ def db_scrape_url(
     db: Annotated[QdrantClient, Depends(get_db)],
 ) -> ScrapResponse:
     url = query.url
-    logger.info(f"Scraping URL: {url}")
+    hashed_url = hash_url(url)
+    logger.info(f"Scraping URL: {url}. Hashed: {hashed_url}")
 
     # Run the agent
     result = agent.invoke(
@@ -211,10 +212,8 @@ def db_scrape_url(
     messages = [message.content for message in result["messages"] if message.content]
     article = json.loads(result["messages"][-2].content)
     summary = json.loads(result["messages"][-1].content)
-    logger.info(article)
-    logger.info(summary)
-    hashed_url = hash_url(url)
-    logger.info(f"{url}. Hashed: {hashed_url}")
+    logger.info(f"Article: {article}")
+    logger.info(f"Summary: {summary}")
     db.add(
         collection_name="news_articles",
         documents=[summary["summary"]],
@@ -244,6 +243,8 @@ async def db_semantic_search(
 ) -> SearchResponse:
     query_text = query.text
     limit = int(query.limit)
+    logger.info(f"Semantic search for: {query_text}. Limit: {limit}")
     response = db.query(collection_name="news_articles", query_text=query_text, limit=limit)
     payload = [str(result.metadata) for result in response]
+    logger.info(f"Results: {payload}")
     return SearchResponse(text=query_text, payload=payload, job="read_from_db")
