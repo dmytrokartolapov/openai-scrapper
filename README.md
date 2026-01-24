@@ -1,5 +1,25 @@
 # openai-scrapper
-The OpenAI Scrapper is an advanced web scraping solution designed to automate the extraction, summarization, and storage of web content using state-of-the-art AI and vector database technologies. Leveraging the power of LangChain, this project enables seamless interaction with large language models to process and summarize scraped data efficiently.
+
+**OpenAI Scrapper** is an advanced web scraping solution powered by AI and vector database technologies. It automates extraction, summarization, and storage of web content, using LangChain for LLM-driven summarization and Qdrant for efficient vector search and storage.
+
+---
+
+## Table of Contents
+
+- [Requirements](#requirements)
+- [Installation](#installation)
+  - [1. Clone the repository](#1-clone-the-repository)
+  - [2. Create a Virtual Environment & Install Dependencies](#2-create-a-virtual-environment--install-dependencies)
+  - [3. Configure Python Interpreter in PyCharm (with .venv)](#3-configure-python-interpreter-in-pycharm-with-venv)
+  - [4. Set Up and Run Qdrant Database](#4-set-up-and-run-qdrant-database)
+  - [5. Get an OpenAI API Key & Set as Environment Variable](#5-get-an-openai-api-key--set-as-environment-variable)
+- [Running the Scrapper](#running-the-scrapper)
+- [Key Features](#key-features)
+- [Use Cases](#use-cases)
+- [Workflow Overview](#workflow-overview)
+- [Benefits](#benefits)
+
+---
 
 ## Requirements
 
@@ -7,95 +27,161 @@ The OpenAI Scrapper is an advanced web scraping solution designed to automate th
 - FastAPI
 - Uvicorn
 - LangChain
-- OpenAI
+- OpenAI Python SDK
 - Qdrant
 
+---
+
 ## Installation
-### Clone the repository:
+
+### 1. Clone the repository
 
 ```bash
 git clone <your-repo-url>
 cd openai-scrapper
 ```
 
-### Upload and startup a Database
-Go to https://github.com/qdrant/qdrant/releases and get last version of qdrant.exe for windows. Or download tested version [qdrant-x86_64-pc-windows-msvc.zip](https://github.com/qdrant/qdrant/releases/download/v1.16.3/qdrant-x86_64-pc-windows-msvc.zip)
+---
 
-Put qdrant.exe in your cloned project and launch it in project terminal by writing in it (may be different in your environment):
+### 2. Create a Virtual Environment & Install Dependencies
+
+**Windows:**
+
+```bash
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
 ```
+
+**macOS/Linux:**
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+---
+
+### 3. Configure Python Interpreter in PyCharm (with .venv)
+
+1. Open your project in **PyCharm**.
+2. Go to **File > Settings > Project: openai-scrapper > Python Interpreter**.
+3. Click the gear ⚙️ next to the interpreter dropdown, then select **Add...**.
+4. Choose **Existing environment**.
+5. Click the `...` button, then browse and select the Python executable from your `.venv` directory:
+    - On Windows, this is: `<project_root>\.venv\Scripts\python.exe`
+    - On macOS/Linux: `<project_root>/.venv/bin/python`
+6. Click **OK** to apply the interpreter.
+
+Now all your project’s dependencies and scripts will run inside your isolated `.venv` environment.
+
+---
+
+### 4. Set Up and Run Qdrant Database
+
+- Download the latest Qdrant for your OS from:  
+  [Qdrant Releases](https://github.com/qdrant/qdrant/releases)
+- Or grab the Windows version directly:  
+  [qdrant-x86_64-pc-windows-msvc.zip](https://github.com/qdrant/qdrant/releases/download/v1.16.3/qdrant-x86_64-pc-windows-msvc.zip)
+- Extract and copy `qdrant.exe` into your project folder.
+- Launch Qdrant in your project terminal:
+
+```bash
 ./qdrant.exe
 ```
 
-### Add OPENAI_API_KEY as Environment Variable:
-Prerequisites
-You must have an OpenAI account. If you don’t have one, sign up at https://platform.openai.com/signup.
-After that you will need to the [Billing](https://platform.openai.com/settings/organization/billing/overview) and add some credits to balance.  
-5$ is totally enough to test it.
+> *(Qdrant runs in the background to provide vector storage)*
 
-Step 1: Log in to OpenAI Platform
-Go to https://platform.openai.com/.
-Click Sign In and enter your credentials.
+---
 
-Step 2: Access API Keys Section
-Once logged in, click on your profile icon (top right corner).
-Select View API Keys from the dropdown menu.
+### 5. Get an OpenAI API Key & Set as Environment Variable
 
-Step 3: Create a New API Key
-On the API Keys page, click the + Create new secret key button.
-Enter a name for your key (optional, for your reference). Click Create secret key.
+#### **A. Create an OpenAI API Key:**
 
-Step 4: Copy and Store Your API Key
-A new API key will be displayed. Copy it immediately—you won’t be able to see it again!
-Store the key securely (e.g., in a password manager or a secure environment variable).
+1. Create an account at https://platform.openai.com/signup.
+2. Add credits in [Billing](https://platform.openai.com/settings/organization/billing/overview) (minimum $5 recommended).
+3. Go to your profile (top right) > **View API keys**.
+4. Click **+ Create new secret key**, copy it—save it securely.
 
-Step 5: Use the API Key
-Add it as Environment Variable OPENAI_API_KEY. Set as Environment Variable in PyCharm for launcher.py.
-1) Open your project in PyCharm.
-2) Go to Run > Edit Configurations...
-3) Select your script or create a new configuration.
-4) In the configuration window, find the Environment variables field.
-5) Click the ... button next to it.
-6) In the dialog, click the + button to add a new variable.
-7) Enter:
-   - Name: OPENAI_API_KEY
-   - Value: your-actual-api-key
-8) Click OK to save.
-9) Run your script from PyCharm. The environment variable will be available to your code.
+#### **B. Set the API Key for Your Project**
 
-### Use Launcher:
-Uvicorn under hood:
+**Option 1: Set as Environment Variable in PyCharm (recommended):**
+
+1. Go to **Run > Edit Configurations...**
+2. Select your script (e.g., `launcher.py`) or create a new configuration.
+3. In the configuration window, find **Environment variables**.
+4. Click the `...` button.
+5. Click `+`, and add:
+    - **Name**: `OPENAI_API_KEY`
+    - **Value**: *your-actual-api-key*
+6. Click **OK** and save.
+
+**Option 2: Set in Terminal (for manual runs):**
+
+```bash
+# Windows (cmd)
+set OPENAI_API_KEY=your-actual-api-key
+
+# Linux/macOS
+export OPENAI_API_KEY=your-actual-api-key
 ```
+
+---
+
+## Running the Scrapper
+
+Start the FastAPI app via the launcher script:
+
+```bash
 python launcher.py
 ```
 
-## Key Features:
-### Automated Web Scraping:
-The scrapper navigates and extracts content from specified websites, handling dynamic pages and complex site structures with ease.
+Uvicorn is used under the hood for high-performance async web services.
 
-### AI-Powered Summarization:
-Using LangChain, the extracted content is processed through language models to generate concise, relevant summaries. This ensures that only the most important information is retained, reducing noise and improving data quality.
+---
 
-### Vector Database Storage:
-Summarized data is embedded into high-dimensional vectors and stored in a vector database (such as Pinecone, FAISS, or Chroma). This enables efficient similarity search, semantic retrieval, and scalable data management.
+## Key Features
 
-### Modular and Extensible Architecture:
-The project is built with modularity in mind, allowing easy integration of new scraping targets, summarization models, or vector database backends.
+- **Automated Web Scraping:**  
+  Handles dynamic web content extraction with ease.
 
-## Use Cases:
-- Knowledge base creation from web sources
-- Competitive intelligence and market research
-- Automated news aggregation and summarization
-- Semantic search and content recommendation systems
+- **AI-Powered Summarization:**  
+  LangChain processes raw content into concise summaries using LLMs.
 
-## Workflow Overview:
-### Input: List of target URLs or domains.
-- Scraping: The system crawls and extracts raw content from each site.
-- Summarization: LangChain processes the content, generating concise summaries.
-- Embedding: Summaries are converted into vector representations.
-- Storage: Vectors and metadata are saved in the vector database for future retrieval.
+- **Vector Database Storage:**  
+  Store and retrieve embeddings for semantic search with Qdrant (or alternatives like FAISS, Chroma, Pinecone).
 
-### Benefits:
-- Saves time by automating data collection and summarization.
-- Enhances information retrieval with semantic search capabilities.
-- Scalable and adaptable for various domains and data volumes.
-- This project is ideal for teams seeking to build intelligent, searchable knowledge repositories from web data using the latest advancements in AI and vector storage.
+- **Modular & Extensible:**  
+  Easily plug in new scraping targets, AI models, or database backends.
+
+---
+
+## Use Cases
+
+- Automated knowledge base from web
+- Competitive/market intelligence
+- News aggregation and summarization
+- Semantic search & recommendations
+
+---
+
+## Workflow Overview
+
+1. **Input:** List of target URLs/domains.
+2. **Scraping:** Extract raw web content.
+3. **Summarization:** Turn content into concise summaries with LangChain.
+4. **Embedding:** Summaries converted to vectors.
+5. **Storage:** Store vectors and metadata in vector database.
+
+---
+
+## Benefits
+
+- Dramatically **reduces manual effort** in data harvesting and summarization.
+- Enables **semantic, AI-powered search** in your collected knowledge base.
+- **Scalable** to large datasets and domains.
+- Perfect for teams or individuals seeking to build **AI-driven searchable knowledge repositories**.
+
+---
+
