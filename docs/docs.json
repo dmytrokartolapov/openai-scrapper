@@ -83,14 +83,8 @@
             "in": "query",
             "required": false,
             "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
+              "type": "string",
+              "default": "",
               "title": "Text"
             }
           },
@@ -223,16 +217,10 @@
       "SearchResponse": {
         "properties": {
           "text": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "string",
             "title": "Text",
             "description": "The query to semantic search for.",
+            "default": "",
             "examples": [
               "Chinese cuisine in the UK"
             ]
