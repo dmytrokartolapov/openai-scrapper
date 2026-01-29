@@ -4,7 +4,15 @@ from httpx import AsyncClient, ASGITransport
 from fastapi import status
 from unittest.mock import MagicMock
 
+from starlette.testclient import TestClient
+
 from src.main import app, extract_news, hash_url, get_db, get_agent
+
+
+@pytest.fixture
+def client():
+    with TestClient(app) as c:
+        yield c
 
 
 @app.get("/raise-exception")
@@ -45,6 +53,7 @@ async def test_unhandled_exception_handler():
 
 
 def test_extract_news(monkeypatch):
+    # Dummy Article class to mock newspaper3k's Article
     class DummyArticle:
         def __init__(self, url):
             self.title = "Test Headline"
@@ -56,12 +65,38 @@ def test_extract_news(monkeypatch):
         def parse(self):
             pass
 
+    # Dummy splitter to mock RecursiveCharacterTextSplitter
+    class DummySplitter:
+        def __init__(self, chunk_size, chunk_overlap):
+            self.chunk_size = chunk_size
+            self.chunk_overlap = chunk_overlap
+
+        def split_text(self, text):
+            # Just split by paragraphs for testing
+            return text.split('\n')
+
+    # Patch Article and RecursiveCharacterTextSplitter
     monkeypatch.setattr("src.main.Article", DummyArticle)
+    monkeypatch.setattr("src.main.RecursiveCharacterTextSplitter", DummySplitter)
+
     url = "http://example.com/news"
     result = extract_news(url)
     data = json.loads(result)
+
     assert data["headline"] == "Test Headline"
-    assert "Test article body." in data["article"]
+    assert data["chunk_index"] == 0
+    assert "Test article body." in data["chunk"]
+    assert data["call_again"] is True
+    assert data["total_chunks"] == 2
+
+    # Test second chunk (simulate next call)
+    result2 = extract_news(url, chunk_index=1)
+    data2 = json.loads(result2)
+    assert data2["headline"] == ""  # Only first chunk returns headline
+    assert data2["chunk_index"] == 1
+    assert "Second paragraph." in data2["chunk"]
+    assert data2["call_again"] is False
+    assert data2["total_chunks"] == 2
 
 
 def test_hash_url_consistency():
@@ -104,43 +139,80 @@ def test_get_agent_returns_agent(monkeypatch):
     assert agent == mock_agent
 
 
-@pytest.mark.asyncio
-async def test_db_scrape_url():
-    class DummyDB:
-        def collection_exists(self, name):
-            return True
-
-        def add(self, collection_name, documents, metadata, ids):
-            pass
-
+def test_db_scrape_url(client):
+    # Dummy agent to simulate chunking and combining
     class DummyMessage:
         def __init__(self, content):
             self.content = content
 
     class DummyAgent:
+        def __init__(self):
+            self.call_count = 0
+
         def invoke(self, payload):
-            return {
-                "messages": [
-                    DummyMessage(json.dumps({"headline": "Test Headline", "article": "Test Article"})),
-                    DummyMessage(
-                        json.dumps(
-                            {"headline": "Test Headline", "summary": "Test Summary", "keywords": ["news", "test"]}
-                        )
-                    ),
-                ]
-            }
+            # First two calls: chunking (simulate two chunks)
+            if self.call_count == 0:
+                self.call_count += 1
+                return {
+                    "messages": [
+                        DummyMessage(json.dumps({"chunk": "Chunk 1"})),
+                        DummyMessage(json.dumps({
+                            "headline": "Test Headline",
+                            "summary": "Summary 1",
+                            "keywords": ["news", "test"],
+                            "call_again": True
+                        }))
+                    ]
+                }
+            elif self.call_count == 1:
+                self.call_count += 1
+                return {
+                    "messages": [
+                        DummyMessage(json.dumps({"chunk": "Chunk 2"})),
+                        DummyMessage(json.dumps({
+                            "headline": "Test Headline",
+                            "summary": "Summary 2",
+                            "keywords": ["news", "test2"],
+                            "call_again": False
+                        }))
+                    ]
+                }
+            # Third call: combine summaries
+            else:
+                return {
+                    "messages": [
+                        DummyMessage(json.dumps({
+                            "headline": "Test Headline",
+                            "summary": "Final Summary",
+                            "keywords": ["news", "test", "final"]
+                        }))
+                    ]
+                }
+
+    # Dummy DB with call tracking
+    dummy_db = MagicMock()
+    dummy_db.collection_exists.return_value = True
 
     app.dependency_overrides[get_agent] = lambda: DummyAgent()
-    app.dependency_overrides[get_db] = lambda: DummyDB()
+    app.dependency_overrides[get_db] = lambda: dummy_db
 
-    transport = ASGITransport(app=app, raise_app_exceptions=False)
-    async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        resp = await ac.get("/v1/db/scrape_url?url=http://example.com/news")
-        assert resp.status_code == 200
-        data = resp.json()
-        assert data["url"] == "http://example.com/news"
-        assert "messages" in data
-        assert data["job"] == "saved_to_db"
+    resp = client.get("/v1/db/scrape_url?url=http://example.com/news")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["url"] == "http://example.com/news"
+    assert "messages" in data
+    assert data["job"] == "saved_to_db"
+
+    # Check DB add call
+    dummy_db.add.assert_called_once()
+    _, kwargs = dummy_db.add.call_args
+    assert kwargs["collection_name"] == "news_articles"
+    assert "Chunk 1" in kwargs["documents"][0]
+    assert "Chunk 2" in kwargs["documents"][0]
+    metadata = kwargs["metadata"][0]
+    assert metadata["headline"] == "Test Headline"
+    assert metadata["summary"] == "Final Summary"
+    assert "news" in metadata["keywords"]
 
     app.dependency_overrides.clear()
 

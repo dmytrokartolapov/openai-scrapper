@@ -1,11 +1,15 @@
 import hashlib
 import json
+import re
+import time
 from datetime import datetime
+from json import JSONDecodeError
 from typing import Annotated
 
 from fastapi import FastAPI, status, Depends, Request
 from langchain_openai import ChatOpenAI
 from langchain.agents import create_agent
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langgraph.graph.state import CompiledStateGraph
 from newspaper import Article
 from pydantic import ValidationError
@@ -18,13 +22,20 @@ from src.models.search_response import SearchResponse
 from src.models.health_status import HealthStatus
 from src.models.scrap_request import ScrapRequest
 from src.models.scrap_response import ScrapResponse
-from src.prompts import SYSTEM_PROMPT
+from src.settings import SYSTEM_PROMPT, MAX_RETRIES, RETRY_DELAY
 
 logger = setup_logger()
 app = FastAPI()
+ARTICLE_CACHE = {} # Variable is enough for testing purposes. In real api needs better solution.
 
 
-def extract_news(url: str) -> str:
+
+def hash_url(url) -> int:
+    """Use SHA256 hash and take the first 8 bytes as an integer"""
+    return int(hashlib.sha256(url.encode("utf-8")).hexdigest()[:16], 16)
+
+
+def extract_news(url: str, chunk_index: int = 0, chunk_size: int = 3000) -> str:
     """
     Fetches and extracts the headline and main body text from a provided news article URL.
 
@@ -38,13 +49,45 @@ def extract_news(url: str) -> str:
     - Only the main headline and article text are returned; metadata, comments, and unrelated sections are excluded.
     - Make sure the URL is valid and points to an accessible news article.
     - The output format is:
-        Headline: <headline>
-        Article: <main text>
+    {
+        "headline": "Headline",
+        "chunk_index": 0,
+        "chunk": "Chunk Text",
+        "call_again": true,
+        "total_chunks": 10
+    }
     """
-    article = Article(url)
-    article.download()
-    article.parse()
-    return json.dumps({"headline": article.title, "article": article.text.replace("\n\n", "\n")})
+    url_hash = str(hash_url(url))
+
+    if url_hash not in ARTICLE_CACHE:
+        # First call: fetch and split
+        article = Article(url)
+        article.download()
+        article.parse()
+        text = article.text.replace("\n\n", "\n")
+        splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=0)
+        chunks = splitter.split_text(text)
+        ARTICLE_CACHE[url_hash] = {
+            "headline": article.title,
+            "chunks": chunks,
+        }
+
+    else:
+        # Subsequent calls: use cached chunks
+        chunks = ARTICLE_CACHE[url_hash]["chunks"]
+
+    response = {
+        "headline": ARTICLE_CACHE[url_hash]["headline"] if chunk_index == 0 else "",
+        "chunk_index": chunk_index,
+        "chunk": chunks[chunk_index],
+        "call_again": chunk_index < len(chunks) - 1,
+        "total_chunks": len(chunks),
+    }
+
+    if not response['call_again']:
+        ARTICLE_CACHE.pop(url_hash)
+
+    return json.dumps(response)
 
 
 def get_agent(
@@ -68,11 +111,6 @@ def get_db(
         client.create_collection(collection_name=collection_name, vectors_config=client.get_fastembed_vector_params())
 
     return client
-
-
-def hash_url(url) -> int:
-    """Use SHA256 hash and take the first 8 bytes as an integer"""
-    return int(hashlib.sha256(url.encode("utf-8")).hexdigest()[:16], 16)
 
 
 @app.exception_handler(ValidationError)
@@ -124,7 +162,7 @@ async def health() -> HealthStatus:
     "/v1/db/scrape_url",
     status_code=status.HTTP_200_OK,
     tags=["scrape_url"],
-    summary="Will scraped data to database.",
+    summary="Scrape news article in chunks and store in database.",
 )
 def db_scrape_url(
     query: Annotated[ScrapRequest, Depends()],
@@ -135,38 +173,107 @@ def db_scrape_url(
     hashed_url = hash_url(url)
     logger.info(f"Scraping URL: {url}. Hashed: {hashed_url}")
 
-    # Run the agent
-    result = agent.invoke(
-        {
-            "messages": [
-                {
-                    "role": "user",
-                    "content": f"Analyze the news article at {url} and return the result in the JSON format",
-                }
-            ]
-        }
-    )
-    messages = [message.content for message in result["messages"] if message.content]
-    article = json.loads(result["messages"][-2].content)
-    summary = json.loads(result["messages"][-1].content)
-    logger.info(f"Article: {article}")
-    logger.info(f"Summary: {summary}")
+    messages = []
+    chunk_index = 0
+    chunk_summaries = []
+    keywords_set = set()
+    headline = ""
+    full_chunks = []
+    call_again = True
+    logger.info("Get chunks and their summaries")
+
+    while call_again:
+        # Single agent call: get chunk and summarize
+        for retry in range(MAX_RETRIES):
+            try:
+                chunk_result = agent.invoke({
+                    "messages": [
+                        {
+                            "role": "user",
+                            "content": f"""
+                                Use the extract_news tool with url='{url}' and chunk_index={chunk_index}.
+                                Then, summarize the returned chunk and extract keywords into json.
+                                Response must contain: 'headline', 'summary', 'keywords', 'call_again' from extract_news tool.
+                                """
+                        }
+                    ]
+                })
+                messages.extend(re.sub(r'\s+', ' ', message.content).strip() for message in chunk_result["messages"] if message.content)
+                tool_json = json.loads(chunk_result["messages"][-2].content)
+                result_json = json.loads(chunk_result["messages"][-1].content)
+                logger.info(f"Chunk: {chunk_index}. Result: {tool_json}")
+                logger.info(f"Result: {result_json}")
+                break
+
+            except JSONDecodeError as error:
+                if retry < MAX_RETRIES - 1:
+                    logger.warning(f"Failed to extract news article: {error}")
+
+                else:
+                    logger.error(f"Failed to extract news article: {error}")
+                    raise error
+
+        if not headline:
+            headline = result_json["headline"]
+
+        chunk_summaries.append(result_json["summary"])
+        full_chunks.append(tool_json["chunk"])
+        keywords_set.update(result_json.get("keywords", []))
+        call_again = result_json["call_again"]
+        chunk_index += 1
+
+    logger.info("Make final summary from chunks")
+
+    for retry in range(MAX_RETRIES):
+        try:
+            combine_result = agent.invoke({
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": f"""
+                            Combine the following summaries into a single, concise 2-4 sentence summary of the entire article,
+                            and extract 3-7 keywords that best represent the main topics in Output Format (JSON).
+                            Response must contain: 'headline', 'summary', 'keywords'.
+                            Summaries:
+                            {' '.join(chunk_summaries)}
+                            """
+                    }
+                ]
+            })
+            messages.extend(re.sub(r'\s+', ' ', message.content).strip() for message in combine_result["messages"] if message.content)
+            result_json = json.loads(combine_result["messages"][-1].content)
+            logger.info(f"Result: {result_json}")
+            break
+
+        except JSONDecodeError as error:
+            if retry < MAX_RETRIES - 1:
+                logger.warning(f"Failed to extract news article: {error}")
+                time.sleep(RETRY_DELAY)
+
+            else:
+                logger.error(f"Failed to extract news article: {error}")
+                raise error
+
+    final_summary = result_json["summary"]
+    keywords = result_json["keywords"]
+
+    # Store in database
+    joined_chunks = "\n".join(full_chunks)
     db.add(
         collection_name="news_articles",
-        documents=[summary["summary"]],
+        documents=[joined_chunks],
         metadata=[
             {
-                "headline": article["headline"],
-                "text": article["article"],
-                "summary": summary["summary"],
-                "keywords": ", ".join(summary["keywords"]),
+                "headline": headline,
+                "text": joined_chunks,
+                "summary": final_summary,
+                "keywords": ", ".join(keywords),
             }
         ],
         ids=[hashed_url],
     )
     logger.info("Article stored in Qdrant.")
     return ScrapResponse(url=url, messages=messages, job="saved_to_db")
-
 
 @app.get(
     "/v1/db/semantic_search",

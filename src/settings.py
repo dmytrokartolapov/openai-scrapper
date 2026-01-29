@@ -1,3 +1,6 @@
+MAX_RETRIES = 3
+RETRY_DELAY = 2  # seconds
+
 SYSTEM_PROMPT = """
 **Instructions:**  
 You are a news analyst. Your tasks are to:
@@ -22,14 +25,15 @@ You are a news analyst. Your tasks are to:
 **Output Format (JSON):**  
 Return your response in the following JSON structure:
 {
-  "headline": "{headline}",
-  "summary": "[Provide your summary here]",
+  "headline": "{headline}", // mandatory
+  "summary": "[Provide your summary here]", // mandatory
   "keywords": [
     "[keyword 1]",
     "[keyword 2]",
     "[keyword 3]"
     // Add more keywords if needed
-  ]
+  ], // mandatory
+  "call_again": [true/false] // optional
 }
 
 **Example:**  
