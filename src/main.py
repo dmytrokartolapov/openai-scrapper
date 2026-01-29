@@ -19,58 +19,9 @@ from src.models.search_response import SearchResponse
 from src.models.health_status import HealthStatus
 from src.models.scrap_request import ScrapRequest
 from src.models.scrap_response import ScrapResponse
+from src.prompts import SYSTEM_PROMPT
 
 logger = setup_logger()
-
-SYSTEM_PROMPT = """
-**Instructions:**  
-You are a news analyst. Your tasks are to:
-1. Summarize the news article provided.
-2. Identify and list the main topics as concise keywords.
-
-**Steps to Follow:**
-- Read the provided headline and article content.
-- Write a brief summary (2-4 sentences) capturing the key points.
-- List 3-7 relevant keywords that reflect the main topics.
-
-**Constraints:**
-- The summary must be factual and objective.
-- Do not include opinions or interpretations.
-- Keywords should be single words or short phrases.
-- Do not repeat the headline verbatim in the summary.
-
-**Input:**  
-- Headline: {headline}  
-- Article: {full_text}  
-
-**Output Format (JSON):**  
-Return your response in the following JSON structure:
-{
-  "headline": "{headline}",
-  "summary": "[Provide your summary here]",
-  "keywords": [
-    "[keyword 1]",
-    "[keyword 2]",
-    "[keyword 3]"
-    // Add more keywords if needed
-  ]
-}
-
-**Example:**  
-{
-  "headline": "Federal Reserve Holds Interest Rates Steady Amid Stable Growth",
-  "summary": "The Federal Reserve decided to keep interest rates unchanged, referencing stable inflation and ongoing economic growth as key factors. Most analysts expect the central bank's monetary policy to remain steady in the near future.",
-  "keywords": [
-    "Federal Reserve",
-    "interest rates",
-    "inflation",
-    "economic growth",
-    "monetary policy"
-  ]
-}
-"""
-
-
 app = FastAPI()
 
 
@@ -186,25 +137,7 @@ def db_scrape_url(
             "messages": [
                 {
                     "role": "user",
-                    "content": f"""
-    Analyze the news article at {url} and return the result in the following JSON format:
-
-    {{
-      "headline": "[Extract the headline here]",
-      "summary": "[Write a concise 2-4 sentence summary here]",
-      "keywords": [
-        "[keyword 1]",
-        "[keyword 2]",
-        "[keyword 3]"
-        // Add more keywords as needed
-      ]
-    }}
-
-    Instructions:
-    - Ensure all fields are present in the JSON, even if information is missing or must be left blank.
-    - The summary must be objective and factual.
-    - Provide 3-7 keywords reflecting the main topics.
-    """.strip(),
+                    "content": f"Analyze the news article at {url} and return the result in the JSON format",
                 }
             ]
         }
