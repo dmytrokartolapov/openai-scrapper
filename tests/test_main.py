@@ -73,7 +73,7 @@ def test_extract_news(monkeypatch):
 
         def split_text(self, text):
             # Just split by paragraphs for testing
-            return text.split('\n')
+            return text.split("\n")
 
     # Patch Article and RecursiveCharacterTextSplitter
     monkeypatch.setattr("src.main.Article", DummyArticle)
@@ -156,12 +156,16 @@ def test_db_scrape_url(client):
                 return {
                     "messages": [
                         DummyMessage(json.dumps({"chunk": "Chunk 1"})),
-                        DummyMessage(json.dumps({
-                            "headline": "Test Headline",
-                            "summary": "Summary 1",
-                            "keywords": ["news", "test"],
-                            "call_again": True
-                        }))
+                        DummyMessage(
+                            json.dumps(
+                                {
+                                    "headline": "Test Headline",
+                                    "summary": "Summary 1",
+                                    "keywords": ["news", "test"],
+                                    "call_again": True,
+                                }
+                            )
+                        ),
                     ]
                 }
             elif self.call_count == 1:
@@ -169,23 +173,31 @@ def test_db_scrape_url(client):
                 return {
                     "messages": [
                         DummyMessage(json.dumps({"chunk": "Chunk 2"})),
-                        DummyMessage(json.dumps({
-                            "headline": "Test Headline",
-                            "summary": "Summary 2",
-                            "keywords": ["news", "test2"],
-                            "call_again": False
-                        }))
+                        DummyMessage(
+                            json.dumps(
+                                {
+                                    "headline": "Test Headline",
+                                    "summary": "Summary 2",
+                                    "keywords": ["news", "test2"],
+                                    "call_again": False,
+                                }
+                            )
+                        ),
                     ]
                 }
             # Third call: combine summaries
             else:
                 return {
                     "messages": [
-                        DummyMessage(json.dumps({
-                            "headline": "Test Headline",
-                            "summary": "Final Summary",
-                            "keywords": ["news", "test", "final"]
-                        }))
+                        DummyMessage(
+                            json.dumps(
+                                {
+                                    "headline": "Test Headline",
+                                    "summary": "Final Summary",
+                                    "keywords": ["news", "test", "final"],
+                                }
+                            )
+                        )
                     ]
                 }
 

@@ -26,8 +26,7 @@ from src.settings import SYSTEM_PROMPT, MAX_RETRIES, RETRY_DELAY
 
 logger = setup_logger()
 app = FastAPI()
-ARTICLE_CACHE = {} # Variable is enough for testing purposes. In real api needs better solution.
-
+ARTICLE_CACHE = {}  # Variable is enough for testing purposes. In real api needs better solution.
 
 
 def hash_url(url) -> int:
@@ -84,7 +83,7 @@ def extract_news(url: str, chunk_index: int = 0, chunk_size: int = 3000) -> str:
         "total_chunks": len(chunks),
     }
 
-    if not response['call_again']:
+    if not response["call_again"]:
         ARTICLE_CACHE.pop(url_hash)
 
     return json.dumps(response)
@@ -186,19 +185,25 @@ def db_scrape_url(
         # Single agent call: get chunk and summarize
         for retry in range(MAX_RETRIES):
             try:
-                chunk_result = agent.invoke({
-                    "messages": [
-                        {
-                            "role": "user",
-                            "content": f"""
+                chunk_result = agent.invoke(
+                    {
+                        "messages": [
+                            {
+                                "role": "user",
+                                "content": f"""
                                 Use the extract_news tool with url='{url}' and chunk_index={chunk_index}.
                                 Then, summarize the returned chunk and extract keywords into json.
                                 Response must contain: 'headline', 'summary', 'keywords', 'call_again' from extract_news tool.
-                                """
-                        }
-                    ]
-                })
-                messages.extend(re.sub(r'\s+', ' ', message.content).strip() for message in chunk_result["messages"] if message.content)
+                                """,
+                            }
+                        ]
+                    }
+                )
+                messages.extend(
+                    re.sub(r"\s+", " ", message.content).strip()
+                    for message in chunk_result["messages"]
+                    if message.content
+                )
                 tool_json = json.loads(chunk_result["messages"][-2].content)
                 result_json = json.loads(chunk_result["messages"][-1].content)
                 logger.info(f"Chunk: {chunk_index}. Result: {tool_json}")
@@ -226,21 +231,27 @@ def db_scrape_url(
 
     for retry in range(MAX_RETRIES):
         try:
-            combine_result = agent.invoke({
-                "messages": [
-                    {
-                        "role": "user",
-                        "content": f"""
+            combine_result = agent.invoke(
+                {
+                    "messages": [
+                        {
+                            "role": "user",
+                            "content": f"""
                             Combine the following summaries into a single, concise 2-4 sentence summary of the entire article,
                             and extract 3-7 keywords that best represent the main topics in Output Format (JSON).
                             Response must contain: 'headline', 'summary', 'keywords'.
                             Summaries:
-                            {' '.join(chunk_summaries)}
-                            """
-                    }
-                ]
-            })
-            messages.extend(re.sub(r'\s+', ' ', message.content).strip() for message in combine_result["messages"] if message.content)
+                            {" ".join(chunk_summaries)}
+                            """,
+                        }
+                    ]
+                }
+            )
+            messages.extend(
+                re.sub(r"\s+", " ", message.content).strip()
+                for message in combine_result["messages"]
+                if message.content
+            )
             result_json = json.loads(combine_result["messages"][-1].content)
             logger.info(f"Result: {result_json}")
             break
@@ -274,6 +285,7 @@ def db_scrape_url(
     )
     logger.info("Article stored in Qdrant.")
     return ScrapResponse(url=url, messages=messages, job="saved_to_db")
+
 
 @app.get(
     "/v1/db/semantic_search",
