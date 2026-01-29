@@ -10,8 +10,7 @@ from langgraph.graph.state import CompiledStateGraph
 from newspaper import Article
 from pydantic import ValidationError
 from qdrant_client import QdrantClient
-from starlette.responses import JSONResponse
-
+from starlette.responses import JSONResponse, RedirectResponse
 
 from src.logger import setup_logger
 from src.models.search_request import SearchRequest
@@ -102,6 +101,11 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
             "timestamp": datetime.now().isoformat() + "Z",
         },
     )
+
+
+@app.get("/", include_in_schema=False)
+async def root():
+    return RedirectResponse(url="/docs")
 
 
 @app.get(
