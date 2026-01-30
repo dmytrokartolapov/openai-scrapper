@@ -63,7 +63,7 @@ def extract_news(url: str, chunk_index: int = 0, chunk_size: int = 3000) -> str:
         article = Article(url)
         article.download()
         article.parse()
-        text = article.text.replace("\n\n", "\n")
+        text = article.text
         splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=0)
         chunks = splitter.split_text(text)
         ARTICLE_CACHE[url_hash] = {
